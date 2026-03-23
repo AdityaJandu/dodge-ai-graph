@@ -122,7 +122,7 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
         switch (label) {
             case "Customer": return <CustomerCard />;
             case "Product": return <ProductCard />;
-            case "Plant": return <PlantCard />; // 🔥 Added Router Path
+            case "Plant": return <PlantCard />;
             case "SalesOrder": return <SalesOrderCard />;
             case "Delivery": return <DeliveryCard />;
             case "BillingDocument": return <BillingCard />;
@@ -134,21 +134,24 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
 
     return (
         <div
-            className={`z-50 bg-white shadow-2xl border border-gray-100 rounded-xl w-72 text-xs transition-opacity duration-200 
+            className={`z-50 bg-white/95 backdrop-blur-sm shadow-2xl border border-gray-200 rounded-2xl w-80 text-xs transition-opacity duration-200
             ${pinned ? "absolute right-4 top-4 opacity-100" : "absolute pointer-events-none opacity-95"}`}
             style={pinned ? {} : { left: (position?.x || 0) + 15, top: (position?.y || 0) + 15 }}
         >
             {/* Header Area with Dynamic Color and Close Button */}
-            <div className="flex items-center justify-between p-4 pb-3 border-b border-gray-50 bg-[#fffefc] rounded-t-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-linear-to-r from-[#fffefc] to-white rounded-t-2xl">
                 <div className="flex items-center gap-2">
                     {/* Color dot matches the graph node color */}
                     <div
-                        className="w-2.5 h-2.5 rounded-full shadow-sm"
+                        className="w-2.5 h-2.5 rounded-full shadow-sm ring-2 ring-white"
                         style={{ backgroundColor: node.color || '#94a3b8' }}
                     />
-                    <h3 className="font-bold text-[#37352f] text-sm tracking-tight">
+                    <h3 className="font-semibold text-[#37352f] text-sm tracking-tight">
                         {label.replace(/([A-Z])/g, ' $1').trim()} {/* Formats "SalesOrder" to "Sales Order" */}
                     </h3>
+                    <span className="text-[10px] uppercase tracking-wide text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-md">
+                        {label}
+                    </span>
                 </div>
                 {pinned && onClose && (
                     <button
@@ -161,7 +164,7 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
             </div>
 
             {/* Content Area */}
-            <div className="p-4 space-y-2">
+            <div className="p-4 space-y-2.5">
                 {renderCardContent()}
             </div>
         </div>
@@ -173,9 +176,9 @@ function Row({ label, value }: { label: string; value: any }) {
     if (!value || value === "undefined" || value === "null") return null; // Don't render empty rows
 
     return (
-        <div className="flex justify-between gap-3 border-b border-gray-50 pb-1.5 last:border-0 last:pb-0">
-            <span className="text-gray-400 whitespace-nowrap">{label}:</span>
-            <span className="font-mono text-gray-700 text-right break-all font-medium">
+        <div className="grid grid-cols-[96px_1fr] items-start gap-3 border border-gray-100 rounded-lg px-2.5 py-2 bg-gray-50/40">
+            <span className="text-[11px] text-gray-500 leading-5">{label}</span>
+            <span className="font-mono text-[11px] text-gray-800 text-right break-all font-medium leading-5">
                 {value}
             </span>
         </div>

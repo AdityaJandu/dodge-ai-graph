@@ -52,6 +52,9 @@ export default function GraphViewer({
     const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [isLoading, setIsLoading] = useState(false);
+    const HOVER_CARD_WIDTH = 320;
+    const HOVER_CARD_HEIGHT = 260;
+    const HOVER_CARD_OFFSET = 15;
 
     // 1. Load graph & Assign Colors
     useEffect(() => {
@@ -97,7 +100,22 @@ export default function GraphViewer({
     // 3. Mouse Tracking for Floating Hover Card
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            setMousePos({ x: e.clientX, y: e.clientY });
+            if (!containerRef.current) return;
+            const rect = containerRef.current.getBoundingClientRect();
+
+            const relativeX = e.clientX - rect.left;
+            const relativeY = e.clientY - rect.top;
+
+            const clampedX = Math.max(
+                8,
+                Math.min(relativeX + HOVER_CARD_OFFSET, rect.width - HOVER_CARD_WIDTH - 8)
+            );
+            const clampedY = Math.max(
+                8,
+                Math.min(relativeY + HOVER_CARD_OFFSET, rect.height - HOVER_CARD_HEIGHT - 8)
+            );
+
+            setMousePos({ x: clampedX, y: clampedY });
         };
         window.addEventListener("mousemove", handleMouseMove);
         return () => window.removeEventListener("mousemove", handleMouseMove);
@@ -228,15 +246,13 @@ export default function GraphViewer({
             />
 
             {!selectedNode && hoveredNode && (
-                <div style={{ position: 'absolute', left: mousePos.x + 15, top: mousePos.y + 15, pointerEvents: 'none' }}>
+                <div style={{ position: 'absolute', left: mousePos.x, top: mousePos.y, pointerEvents: 'none' }}>
                     <NodeDetailsCard node={hoveredNode} />
                 </div>
             )}
 
             {selectedNode && (
-                <div className="absolute top-4 right-4 z-20 shadow-2xl">
-                    <NodeDetailsCard node={selectedNode} pinned={true} onClose={() => setSelectedNode(null)} />
-                </div>
+                <NodeDetailsCard node={selectedNode} pinned={true} onClose={() => setSelectedNode(null)} />
             )}
         </div>
     );
