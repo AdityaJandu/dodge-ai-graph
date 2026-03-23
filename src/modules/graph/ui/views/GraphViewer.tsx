@@ -3,7 +3,8 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import NodeDetailsCard from '../components/NodeDetailsCard';
-import { Loader2Icon, Maximize2, RotateCcw, X } from 'lucide-react';
+import { Maximize2, RotateCcw, X } from 'lucide-react';
+import LoadingState from '../components/LoadingState';
 
 type GraphNode = {
     id: string;
@@ -158,12 +159,7 @@ export default function GraphViewer({
     }, [highlightIds, graphData]);
 
     if (isLoading) {
-        return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-[#fffefc]">
-                <Loader2Icon className="animate-spin text-gray-400 mb-2" size={24} />
-                <p className="text-sm text-gray-500 font-medium">Rendering Enterprise Graph Engine...</p>
-            </div>
-        );
+        return <LoadingState />;
     }
 
     return (
