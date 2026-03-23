@@ -32,6 +32,19 @@ const NODE_COLORS: Record<string, string> = {
     Default: '#94a3b8'          // Slate Gray fallback
 };
 
+const NODE_LEGEND: Array<{ label: string; color: string }> = [
+    { label: 'Customer', color: NODE_COLORS.Customer },
+    { label: 'Product', color: NODE_COLORS.Product },
+    { label: 'Plant', color: NODE_COLORS.Plant },
+    { label: 'SalesOrder', color: NODE_COLORS.SalesOrder },
+    { label: 'Delivery', color: NODE_COLORS.Delivery },
+    { label: 'BillingDocument', color: NODE_COLORS.BillingDocument },
+    { label: 'JournalEntry', color: NODE_COLORS.JournalEntry },
+    { label: 'Payment', color: NODE_COLORS.Payment }
+];
+
+const formatLabel = (label: string) => label.replace(/([A-Z])/g, ' $1').trim();
+
 export default function GraphViewer({
     highlightIds = [],
     onClearHighlights
@@ -244,6 +257,32 @@ export default function GraphViewer({
 
                 onBackgroundClick={() => setSelectedNode(null)}
             />
+
+            <div className="absolute bottom-6 left-4 z-10 w-[340px] rounded-2xl border border-gray-200/90 bg-transparent backdrop-blur-lg shadow-md">
+                <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-gray-100">
+                    <p className="text-[11px] font-semibold tracking-wide text-gray-700 uppercase">
+                        Graph Legend
+                    </p>
+                    <span className="text-[10px] text-gray-500">{NODE_LEGEND.length} types</span>
+                </div>
+
+                <div className="p-3 flex flex-wrap gap-2">
+                    {NODE_LEGEND.map((item) => (
+                        <div
+                            key={item.label}
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-transparent px-2.5 py-1 text-[11px] text-gray-700"
+                        >
+                            <span
+                                className="h-2.5 w-2.5 rounded-full shrink-0 ring-1 ring-white"
+                                style={{ backgroundColor: item.color }}
+                            />
+                            <span className="font-medium text-gray-800 leading-none">
+                                {formatLabel(item.label)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             {!selectedNode && hoveredNode && (
                 <div style={{ position: 'absolute', left: mousePos.x, top: mousePos.y, pointerEvents: 'none' }}>
