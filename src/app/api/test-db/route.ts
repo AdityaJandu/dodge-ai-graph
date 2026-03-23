@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { runQuery } from '@/lib/neo4j';
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
     try {
         // This simple query just asks the database to return the number 1
         const result = await runQuery('RETURN 1 AS number');

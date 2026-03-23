@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import { runQuery } from '@/lib/neo4j';
 
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
     try {
         // 1. Dynamic Graph Fetch
         // We match ANY relationship to see the full Order-to-Cash flow.
-        // LIMIT 400 protects the browser's physics engine from crashing.
+        // LIMIT 400 protects the browser's physics engine from crashing. -> LIMIT 400
+        // Rignt now fetching everything for simplicity:
         const cypher = `
             MATCH (n)-[r]->(m)
             RETURN n, r, m
-            LIMIT 400
         `;
 
         const result = await runQuery(cypher);
