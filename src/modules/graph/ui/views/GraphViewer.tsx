@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import NodeDetailsCard from '../components/NodeDetailsCard';
 import { Maximize2, RotateCcw, X } from 'lucide-react';
-import LoadingState from '../components/LoadingState';
+import { LoadingState } from '@/components/self/loading_state';
 
 type GraphNode = {
     id: string;
@@ -159,7 +159,11 @@ export default function GraphViewer({
     }, [highlightIds, graphData]);
 
     if (isLoading) {
-        return <LoadingState />;
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <LoadingState title="Loading Enterprise Graph Engine..." descr="Please wait while we load the graph..." />
+            </div>
+        );
     }
 
     return (
