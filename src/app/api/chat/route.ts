@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { runQuery } from '@/lib/neo4j';
 
@@ -35,7 +35,7 @@ async function callGemini(prompt: string): Promise<string> {
 
 // API Route Handler
 // This handles POST (chat query)
-export async function POST(req: Request): Promise<Response> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
     try {
         const body = await req.json();
         const userMessage = body.message;

@@ -23,7 +23,7 @@ export default function Home() {
     <main className="flex h-screen w-full bg-[#fffefc] text-[#37352f] font-sans">
 
       <div className="w-2/3 h-full border-r border-gray-200 relative">
-        <GraphViewer highlightIds={highlightIds} />
+        <GraphViewer highlightIds={highlightIds} onClearHighlights={() => setHighlightIds([])} />
       </div>
 
       <div className="w-1/3 h-full">
