@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import NodeDetailsCard from '../components/NodeDetailsCard';
-import { Loader2Icon, Maximize2, RotateCcw } from 'lucide-react';
+import { Loader2Icon, Maximize2, RotateCcw, X } from 'lucide-react';
 
 type GraphNode = {
     id: string;
@@ -19,10 +19,11 @@ type GraphLink = {
     target: string;
 };
 
-// 🔥 NEW: Color mapping for the complete Order-to-Cash pipeline
+// 🔥 UPDATED: Added Plant to the color mapping
 const NODE_COLORS: Record<string, string> = {
     Customer: '#8b5cf6',        // Purple
     Product: '#ec4899',         // Pink
+    Plant: '#14b8a6',           // Teal
     SalesOrder: '#3b82f6',      // Blue
     Delivery: '#06b6d4',        // Cyan
     BillingDocument: '#ef4444', // Red
@@ -31,7 +32,13 @@ const NODE_COLORS: Record<string, string> = {
     Default: '#94a3b8'          // Slate Gray fallback
 };
 
-export default function GraphViewer({ highlightIds = [] }: { highlightIds?: string[] }) {
+export default function GraphViewer({
+    highlightIds = [],
+    onClearHighlights
+}: {
+    highlightIds?: string[];
+    onClearHighlights?: () => void;
+}) {
     const graphRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -96,29 +103,28 @@ export default function GraphViewer({ highlightIds = [] }: { highlightIds?: stri
         return () => window.removeEventListener("mousemove", handleMouseMove);
     }, []);
 
-    // Memoize the highlight set for O(1) lookups
+    // Memoize the highlight set for O(1) rendering lookups
     const highlightSet = useMemo(() => new Set(highlightIds.map(String)), [highlightIds]);
 
     // 4. Auto-Center & Select Node when Chat returns IDs
+    // FIXED: Safe dependency array to prevent Next.js crashes
     useEffect(() => {
         if (!highlightIds.length || graphData.nodes.length === 0) {
             setSelectedNode(null);
             return;
         }
 
-        // Find the first highlighted node
-        const nodeToCenter = graphData.nodes.find(n => highlightSet.has(n.id));
+        const nodeToCenter = graphData.nodes.find(n => highlightIds.includes(String(n.id)));
 
         if (nodeToCenter && graphRef.current) {
             setSelectedNode(nodeToCenter);
 
-            // If the physics engine has assigned coordinates, zoom to it
             if (nodeToCenter.x !== undefined && nodeToCenter.y !== undefined) {
                 graphRef.current.centerAt(nodeToCenter.x, nodeToCenter.y, 800);
                 graphRef.current.zoom(3, 800);
             }
         }
-    }, [highlightIds, graphData.nodes]);
+    }, [highlightIds, graphData]);
 
     if (isLoading) {
         return (
@@ -132,8 +138,8 @@ export default function GraphViewer({ highlightIds = [] }: { highlightIds?: stri
     return (
         <div ref={containerRef} className="w-full h-full relative bg-[#fffefc] overflow-hidden">
 
-            {/* Toolbar */}
-            <div className="absolute top-4 left-4 z-10 flex gap-2">
+            {/* TOOLBAR WITH CLEAR BUTTON */}
+            <div className="absolute top-4 left-4 z-10 flex gap-2 items-center">
                 <button
                     onClick={() => graphRef.current?.zoomToFit(400)}
                     className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-600 hover:bg-gray-50 transition-colors"
@@ -148,6 +154,20 @@ export default function GraphViewer({ highlightIds = [] }: { highlightIds?: stri
                 >
                     <RotateCcw size={16} />
                 </button>
+
+                {highlightIds.length > 0 && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedNode(null);
+                            if (onClearHighlights) onClearHighlights();
+                            graphRef.current?.zoomToFit(400);
+                        }}
+                        className="ml-2 bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 animate-in fade-in zoom-in duration-200"
+                    >
+                        <X size={14} strokeWidth={3} /> Clear Search Results
+                    </button>
+                )}
             </div>
 
             <ForceGraph2D
@@ -156,32 +176,28 @@ export default function GraphViewer({ highlightIds = [] }: { highlightIds?: stri
                 height={dimensions.height}
                 graphData={graphData}
 
-                // CRITICAL FOR LARGE DATASETS: Stop calculating physics after 100 ticks
                 cooldownTicks={100}
 
                 nodeCanvasObject={(node: any, ctx, globalScale) => {
                     const isHighlighted = highlightSet.has(String(node.id));
                     const hasHighlights = highlightSet.size > 0;
 
-                    // Base size logic
                     const baseSize = isHighlighted ? 8 : 4;
                     const size = baseSize / globalScale;
 
                     ctx.beginPath();
                     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
 
-                    // Dim non-highlighted nodes heavily if a search is active
                     ctx.fillStyle = isHighlighted
-                        ? '#f59e0b' // Bright Amber for highlights
+                        ? '#0066ff' // Match your custom link highlight color
                         : hasHighlights
-                            ? '#f1f5f9' // Ghostly gray if ignored
-                            : node.color; // Standard rainbow mapping
+                            ? '#f1f5f9'
+                            : node.color;
 
                     ctx.fill();
 
-                    // Add a stroke ring to highlighted nodes to make them pop further
                     if (isHighlighted) {
-                        ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+                        ctx.strokeStyle = 'rgba(0, 102, 255, 0.4)';
                         ctx.lineWidth = 4 / globalScale;
                         ctx.stroke();
                     }
@@ -197,30 +213,26 @@ export default function GraphViewer({ highlightIds = [] }: { highlightIds?: stri
                 linkWidth={(link: any) =>
                     highlightSet.has(String(link.source.id || link.source)) ||
                         highlightSet.has(String(link.target.id || link.target))
-                        ? 4
+                        ? 4 / (graphRef.current?.zoom() || 1) // Keeps thick links from taking over screen when zoomed
                         : 0.5
                 }
 
                 onNodeHover={(node: any) => setHoveredNode(node || null)}
 
-                // Allow user to click a node to pin the card
                 onNodeClick={(node: any) => {
                     setSelectedNode(node);
                     graphRef.current.centerAt(node.x, node.y, 600);
                 }}
 
-                // Click background to dismiss the pinned card
                 onBackgroundClick={() => setSelectedNode(null)}
             />
 
-            {/* 1. Temporary Hover Card (Follows Mouse) */}
             {!selectedNode && hoveredNode && (
                 <div style={{ position: 'absolute', left: mousePos.x + 15, top: mousePos.y + 15, pointerEvents: 'none' }}>
                     <NodeDetailsCard node={hoveredNode} />
                 </div>
             )}
 
-            {/* 2. Persistent Pinned Card (Search Result or Click) */}
             {selectedNode && (
                 <div className="absolute top-4 right-4 z-20 shadow-2xl">
                     <NodeDetailsCard node={selectedNode} pinned={true} onClose={() => setSelectedNode(null)} />

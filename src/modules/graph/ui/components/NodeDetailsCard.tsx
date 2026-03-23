@@ -35,7 +35,7 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
         <>
             <Row label="Customer ID" value={node.id || node.BusinessPartner} />
             <Row label="Name" value={node.name || node.BusinessPartnerName} />
-            <Row label="Country" value={node.Country} />
+            <Row label="Country" value={node.country || node.Country} />
         </>
     );
 
@@ -43,7 +43,15 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
         <>
             <Row label="Product ID" value={node.id || node.Product} />
             <Row label="Type" value={node.type || node.ProductType} />
-            <Row label="Category" value={node.ProductGroup} />
+            <Row label="Category" value={node.group || node.ProductGroup} />
+        </>
+    );
+
+    // 🔥 NEW: Plant Card
+    const PlantCard = () => (
+        <>
+            <Row label="Plant ID" value={node.id || node.Plant} />
+            <Row label="Name" value={node.name || node.PlantName} />
         </>
     );
 
@@ -53,8 +61,8 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
             <Row label="Order ID" value={node.id || node.SalesOrder} />
             <Row label="Amount" value={money(node.amount || node.TotalNetAmount, node.currency || node.TransactionCurrency)} />
             <Row label="Customer Ref" value={node.customerId || node.SoldToParty} />
-            <Row label="Status" value={node.OverallDeliveryStatus || node.overallDeliveryStatus} />
-            <Row label="Created On" value={formatDate(node.CreationDate || node.creationDate)} />
+            <Row label="Status" value={node.status || node.OverallDeliveryStatus || node.overallDeliveryStatus} />
+            <Row label="Created On" value={formatDate(node.date || node.CreationDate || node.creationDate)} />
         </>
     );
 
@@ -62,8 +70,8 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
         <>
             <Row label="Delivery ID" value={node.id || node.DeliveryDocument} />
             <Row label="Order Ref" value={node.orderId || node.ReferenceSDDocument} />
-            <Row label="Shipping Point" value={node.ShippingPoint} />
-            <Row label="Planned Date" value={formatDate(node.PlannedGoodsIssueDate)} />
+            <Row label="Shipping Point" value={node.shippingPoint || node.ShippingPoint} />
+            <Row label="Planned Date" value={formatDate(node.plannedDate || node.PlannedGoodsIssueDate)} />
         </>
     );
 
@@ -82,7 +90,7 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
             <Row label="Company Code" value={node.companyCode || node.CompanyCode} />
             <Row label="Amount" value={money(node.amount || node.AmountInTransactionCurrency, node.currency || node.CompanyCodeCurrency)} />
             <Row label="Billing Ref" value={node.billingId || node.ReferenceDocument} />
-            <Row label="Posting Date" value={formatDate(node.PostingDate || node.postingDate)} />
+            <Row label="Posting Date" value={formatDate(node.date || node.PostingDate || node.postingDate)} />
         </>
     );
 
@@ -114,6 +122,7 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
         switch (label) {
             case "Customer": return <CustomerCard />;
             case "Product": return <ProductCard />;
+            case "Plant": return <PlantCard />; // 🔥 Added Router Path
             case "SalesOrder": return <SalesOrderCard />;
             case "Delivery": return <DeliveryCard />;
             case "BillingDocument": return <BillingCard />;
