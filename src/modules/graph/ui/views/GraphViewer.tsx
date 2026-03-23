@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import NodeDetailsCard from '../components/NodeDetailsCard';
 import { Maximize2, RotateCcw, X } from 'lucide-react';
-import { LoadingState } from '@/components/self/loading_state';
+import { LoadingState } from '../../../../components/self/loading_state';
 
 type GraphNode = {
     id: string;
