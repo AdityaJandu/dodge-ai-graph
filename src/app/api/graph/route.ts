@@ -13,18 +13,33 @@ type GraphLink = {
     type: string;
 };
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: Request): Promise<NextResponse> {
     try {
         // Cap relationship count to keep first render snappy.
         const MAX_RELATIONSHIPS = 1200;
-        const cypher = `
-            MATCH (n)-[r]->(m)
-            WITH n, r, m
-            LIMIT ${MAX_RELATIONSHIPS}
-            RETURN n, r, m
-        `;
+        const { searchParams } = new URL(request.url);
+        const customerId = searchParams.get('customerId')?.trim();
+        const hasCustomerFilter = Boolean(customerId);
 
-        const result = await runQuery(cypher);
+        const cypher = hasCustomerFilter
+            ? `
+                MATCH (c:Customer)
+                WHERE toString(c.id) = $customerId
+                OPTIONAL MATCH (c)-[r]-(m)
+                RETURN c AS n, r, m
+                LIMIT ${MAX_RELATIONSHIPS}
+            `
+            : `
+                MATCH (n)-[r]->(m)
+                WITH n, r, m
+                LIMIT ${MAX_RELATIONSHIPS}
+                RETURN n, r, m
+            `;
+
+        const result = await runQuery(
+            cypher,
+            hasCustomerFilter ? { customerId } : undefined
+        );
 
         const nodesMap = new Map<string, GraphNode>();
         const links: GraphLink[] = [];
