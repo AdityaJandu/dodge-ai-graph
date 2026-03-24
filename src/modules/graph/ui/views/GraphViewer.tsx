@@ -66,7 +66,7 @@ export default function GraphViewer({
     const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
     const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const HOVER_CARD_WIDTH = 320;
     const HOVER_CARD_HEIGHT = 260;
     const HOVER_CARD_OFFSET = 15;

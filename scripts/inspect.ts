@@ -30,16 +30,17 @@ async function inspectData() {
                 console.log(`=========================================`);
 
                 try {
-                    const parsed = JSON.parse(line);
+                    const parsed: Record<string, unknown> = JSON.parse(line);
                     // Print the keys and the first value so we can see the data types
                     const schema = Object.keys(parsed).reduce((acc, key) => {
                         acc[key] = parsed[key];
                         return acc;
-                    }, {} as any);
+                    }, {} as Record<string, unknown>);
 
                     console.log(schema);
                 } catch (e) {
                     console.log("❌ Error parsing JSON on line 1.");
+                    console.error(e);
                 }
 
                 console.log("\n");
