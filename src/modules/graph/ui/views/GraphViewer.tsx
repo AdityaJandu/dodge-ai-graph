@@ -230,7 +230,7 @@ export default function GraphViewer({
                     ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
 
                     ctx.fillStyle = isHighlighted
-                        ? '#0066ff' // Match your custom link highlight color
+                        ? '#0066ff'
                         : hasHighlights
                             ? '#f1f5f9'
                             : node.color;
@@ -254,7 +254,7 @@ export default function GraphViewer({
                 linkWidth={(link: any) =>
                     highlightSet.has(String(link.source.id || link.source)) ||
                         highlightSet.has(String(link.target.id || link.target))
-                        ? 4 / (graphRef.current?.zoom() || 1) // Keeps thick links from taking over screen when zoomed
+                        ? 1 / (graphRef.current?.zoom() || 1)
                         : 0.5
                 }
 
