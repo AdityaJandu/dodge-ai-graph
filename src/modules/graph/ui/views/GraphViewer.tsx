@@ -139,7 +139,16 @@ export default function GraphViewer({
     // Memoize the highlight set for O(1) rendering lookups
     const highlightSet = useMemo(() => new Set(highlightIds.map(String)), [highlightIds]);
 
-    // 4. Auto-Center & Select Node when Chat returns IDs
+    // 4. Spread nodes out more to reduce clustering.
+    useEffect(() => {
+        if (!graphRef.current || graphData.nodes.length === 0) return;
+
+        graphRef.current.d3Force('charge')?.strength(-350);
+        graphRef.current.d3Force('link')?.distance(300);
+        graphRef.current.d3ReheatSimulation();
+    }, [graphData]);
+
+    // 5. Auto-Center & Select Node when Chat returns IDs
     // FIXED: Safe dependency array to prevent Next.js crashes
     useEffect(() => {
         if (!highlightIds.length || graphData.nodes.length === 0) {
@@ -208,7 +217,7 @@ export default function GraphViewer({
                 height={dimensions.height}
                 graphData={graphData}
 
-                cooldownTicks={100}
+                cooldownTicks={140}
 
                 nodeCanvasObject={(node: any, ctx, globalScale) => {
                     const isHighlighted = highlightSet.has(String(node.id));
@@ -259,7 +268,7 @@ export default function GraphViewer({
                 onBackgroundClick={() => setSelectedNode(null)}
             />
 
-            <div className="absolute bottom-6 left-4 z-10 w-[340px] rounded-2xl border border-gray-200/90 bg-transparent backdrop-blur-lg shadow-md">
+            <div className="absolute bottom-6 left-4 z-10 w-[340px] rounded-2xl border border-gray-200/90 bg-transparent backdrop-blur-md shadow-md">
                 <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-gray-100">
                     <p className="text-[11px] font-semibold tracking-wide text-gray-700 uppercase">
                         Graph Legend

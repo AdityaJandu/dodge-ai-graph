@@ -71,7 +71,7 @@ export default function NodeDetailsCard({ node, position, pinned = false, onClos
             <Row label="Delivery ID" value={node.id || node.DeliveryDocument} />
             <Row label="Order Ref" value={node.orderId || node.ReferenceSDDocument} />
             <Row label="Shipping Point" value={node.shippingPoint || node.ShippingPoint} />
-            <Row label="Planned Date" value={formatDate(node.plannedDate || node.PlannedGoodsIssueDate)} />
+            {/* <Row label="Planned Date" value={formatDate(node.plannedDate || node.PlannedGoodsIssueDate)} /> */}
         </>
     );
 
