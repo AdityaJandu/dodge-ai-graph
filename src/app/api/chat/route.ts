@@ -2,6 +2,17 @@ import { NextResponse, NextRequest } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { runQuery } from '@/lib/neo4j';
 
+type Neo4jNodeLike = {
+    properties: Record<string, unknown>;
+    labels: string[];
+};
+
+type NormalizedNode = {
+    id: string;
+    label: string;
+    [key: string]: unknown;
+};
+
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -10,6 +21,7 @@ const SYSTEM_PROMPT = `
 You are an AI agent analyzing an "Order to Cash" graph database.
 
 SCHEMA:
+- (Customer {id})
 - (SalesOrder {id, amount, currency})
 - (BillingDocument {id, amount, material})
 - (JournalEntry {id, amount, companyCode})
@@ -17,13 +29,15 @@ SCHEMA:
 RULES:
 1. ALWAYS return full nodes
 2. Use toString(node.id)
-3. Use undirected relationships
-4. LIMIT 20
+3. Use undirected relationships when traversing between entities
+4. When the user asks for a Customer (or "customer id"), query :Customer by id:
+   MATCH (c:Customer) WHERE toString(c.id) = '<id>' RETURN c LIMIT 10
+5. LIMIT 20
 
 OUTPUT:
 {
   "guardrail": false,
-  "cypher": "MATCH (s:SalesOrder) RETURN s LIMIT 10"
+  "cypher": "MATCH (c:Customer) RETURN c LIMIT 10"
 }
 `;
 
@@ -53,28 +67,37 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
         const cypherQuery = parsed.cypher;
 
-        const dbResult = await runQuery(cypherQuery);
+        const dbResult = await runQuery(cypherQuery) as unknown as Array<{
+            keys: string[];
+            get: (key: string) => unknown;
+        }>;
+
+        const isNeo4jNode = (val: unknown): val is Neo4jNodeLike => {
+            if (!val || typeof val !== 'object') return false;
+            const maybe = val as { properties?: unknown; labels?: unknown };
+            if (!maybe.properties || typeof maybe.properties !== 'object') return false;
+            if (!Array.isArray(maybe.labels)) return false;
+            if (!maybe.labels.every(l => typeof l === 'string')) return false;
+            return true;
+        };
 
         // Normalize data
-        const cleanData = dbResult.map((record: any) => {
-            const obj: any = {};
+        const cleanData = dbResult.map((record) => {
+            const obj: Record<string, NormalizedNode> = {};
 
             record.keys.forEach((key: string) => {
                 const val = record.get(key);
+                if (!isNeo4jNode(val)) return;
 
-                if (val?.properties) {
-                    const props = val.properties;
+                const props = val.properties;
+                const nodeIdCandidate: unknown =
+                    props.id ?? props.billingDocument ?? props.accountingDocument;
 
-                    obj[key] = {
-                        id: String(
-                            props.id ||
-                            props.billingDocument ||
-                            props.accountingDocument
-                        ),
-                        label: val.labels[0],
-                        ...props
-                    };
-                }
+                const nodeIdOk =
+                    typeof nodeIdCandidate === 'string' || typeof nodeIdCandidate === 'number';
+                if (!nodeIdOk) return;
+
+                obj[key] = { id: String(nodeIdCandidate), label: val.labels[0], ...props };
             });
 
             return obj;
@@ -83,11 +106,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         // Extract highlight IDs
         const highlightIds: string[] = [];
 
-        cleanData.forEach((row: any) => {
-            Object.values(row).forEach((node: any) => {
-                if (node?.id) {
-                    highlightIds.push(String(node.id));
-                }
+        cleanData.forEach((row) => {
+            Object.values(row).forEach((node) => {
+                highlightIds.push(String(node.id));
             });
         });
 
